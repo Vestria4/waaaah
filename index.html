@@ -53,6 +53,8 @@
                             link.download = file.name.replace('.level', '.json');
                             link.click();
                             window.URL.revokeObjectURL(url);
+                        }).catch((error) => {
+                            console.error('Error reading array buffer:', error);
                         });
                     }
                 };
@@ -61,6 +63,37 @@
             } else {
                 alert('Please select a file.');
             }
+        }
+
+        function readArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                let reader = new FileReader();
+
+                reader.onload = function () {
+                    let buffer = reader.result;
+
+                    // Replace YourProtobufMessage and field names with your actual protobuf message structure
+                    const YourProtobufMessage = protobuf.roots.default.lookupType("YourProtobufMessage");
+
+                    // Decoding the buffer assuming a simple protobuf structure with fields field1, field2, field3
+                    const decodedData = YourProtobufMessage.decode(new Uint8Array(buffer));
+
+                    // Convert the decoded protobuf data to a JavaScript object or JSON
+                    const jsonData = {
+                        field1: decodedData.field1,
+                        field2: decodedData.field2,
+                        field3: decodedData.field3,
+                    };
+
+                    resolve(jsonData);
+                };
+
+                reader.onerror = function (error) {
+                    reject(error);
+                };
+
+                reader.readAsArrayBuffer(file);
+            });
         }
     </script>
 
