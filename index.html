@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Conversion</title>
+</head>
+<body>
+
+    <input type="file" id="json-file" accept=".json, .level">
+    <button onclick="convertJSON()">Convert</button>
+
+    <script src="https://cdn.rawgit.com/dcodeIO/protobuf.js/6.9.0/dist/protobuf.js"></script>
+    <script>
+        function convertJSON() {
+            let file = document.getElementById('json-file').files[0];
+
+            if (file) {
+                let reader = new FileReader();
+
+                reader.onload = function () {
+                    let data = reader.result;
+
+                    if (file.name.endsWith('.json')) {
+                        let obj = JSON.parse(data);
+                        // Code for JSON to level conversion
+                        protobuf.load("proto/level.proto", function(err, root) {
+                            if (err) { throw err; }
+
+                            let message = root.lookupType("COD.Level.Level");
+                            let errMsg = message.verify(obj);
+                            if (errMsg) { throw Error(errMsg); }
+                            let buffer = message.encode(message.fromObject(obj)).finish();
+                            
+                            let blob = new Blob([buffer], { type: "application/octet-stream" });
+                            let url = window.URL.createObjectURL(blob);
+
+                            let link = document.createElement("a");
+                            link.href = url;
+                            link.download = file.name.replace('.json', '.level');
+                            link.click();
+                            window.URL.revokeObjectURL(url);
+                        });
+                    } else if (file.name.endsWith('.level')) {
+                        // Code for level to JSON conversion
+                        readArrayBuffer(file).then((obj) => {
+                            let json = JSON.stringify(obj, null, 2);
+                            let blob = new Blob([json], { type: "application/json" });
+                            let url = window.URL.createObjectURL(blob);
+
+                            let link = document.createElement("a");
+                            link.href = url;
+                            link.download = file.name.replace('.level', '.json');
+                            link.click();
+                            window.URL.revokeObjectURL(url);
+                        });
+                    }
+                };
+
+                reader.readAsText(file);
+            } else {
+                alert('Please select a file.');
+            }
+        }
+    </script>
+
+</body>
+</html>
